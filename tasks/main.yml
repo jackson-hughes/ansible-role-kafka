@@ -88,12 +88,12 @@
 
 - name: Check if Kafka storage has been formatted
   stat:
-    path: "{{ kafka_dir }}"
-  register: dir
+    path: "{{ kafka_data_log_dir }}/meta.properties"
+  register: storage_format_file
 
 - name: Generate kafka storage random uuid
   ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
-  when: not dir.stat.exists
+  when: not storage_format_file.stat.exists
   register: kafka_uuid
 
 - name: Format kafka storage
