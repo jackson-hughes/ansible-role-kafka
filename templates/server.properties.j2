@@ -31,7 +31,7 @@ node.id={{ kafka_node_id }}
 # The connect string for the controller quorum
 # todo: loop over kafka_nodes
 #controller.quorum.voters=1@localhost:9093
-controller.quorom.voters={% for host in kafka_nodes -%}
+controller.quorum.voters={% for host in kafka_nodes -%}
 {{ loop.index }}@{{ host }}:9093
 {%- if not loop.last %},{% endif -%}
 {% endfor %}
