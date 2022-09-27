@@ -9,7 +9,8 @@ kafka_root_dir: /opt
 kafka_dir: "{{ kafka_root_dir }}/kafka"
 kafka_log_dir: /var/log/kafka # The application log folder (e.g: server.log)
 kafka_log_retention_hours: 336
-kafka_data_log_dirs: /var/lib/kafka/logs
+kafka_data_log_dirs:
+  - /var/lib/kafka/logs
 kafka_nodes: localhost
 kafka_node_id: 0
 kafka_node_role: "broker,controller" # broker or controller or broker,controller
@@ -24,6 +25,6 @@ kafka_java_heap: "-Xms2G -Xmx2G" # The Java heap size (memory) allocation (xmx, 
 #listeners=PLAINTEXT://:9092
 kafka_listeners:
   - "PLAINTEXT://:9092"
-  - "CONTROLLER://:19092"
+  - "CONTROLLER://:9093"
 
 kafka_systemd_file_path: /usr/lib/systemd/system/kafka.service
