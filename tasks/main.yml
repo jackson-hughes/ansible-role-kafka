@@ -50,7 +50,7 @@
     group: "{{ kafka_group }}"
     owner: "{{ kafka_user }}"
     mode: 0755
-  with_items: "{{ kafka_data_log_dirs.split(",") }}"
+  with_items: "{{ kafka_data_log_dirs.split(',') }}"
 
 - name: Create directory for kafka application logs
   file:
