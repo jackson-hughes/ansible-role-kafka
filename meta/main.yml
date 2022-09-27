@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: Jackson Hughes
+  namespace: jhughes01
+  role_name: kafka
+  description: Installs Apache Kafka on Enterprise Linux (CentOS, Fedora & Red Hat) with kraft support
+  license: MIT
+  min_ansible_version: 2.11.4
+  platforms:
+    - name: EL
+      versions:
+        - 7
+        - 8
+  galaxy_tags:
+    - kafka
+    - kraft
+
+dependencies: []

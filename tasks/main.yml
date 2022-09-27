@@ -1,0 +1,117 @@
+---
+- name: Create kafka group
+  group:
+    name: "{{ kafka_group }}"
+    state: present
+    system: yes
+  when: kafka_create_user_group | bool
+
+- name: Create kafka user
+  user:
+    name: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    state: present
+    createhome: no
+    system: yes
+  when: kafka_create_user_group | bool
+
+- name: Check if Kafka has already been installed
+  stat:
+    path: "{{ kafka_dir }}_{{ kafka_scala_version }}-{{ kafka_version }}"
+  register: dir
+
+- name: Download Apache Kafka
+  get_url:
+    url: "{{ kafka_download_base_url }}/{{ kafka_version }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz"
+    dest: /tmp
+  when: not dir.stat.exists
+
+- name: Unpack Apache Kafka
+  unarchive:
+    src: /tmp/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz
+    dest: "{{ kafka_root_dir }}"
+    copy: no
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+  when: not dir.stat.exists
+
+- name: Create symlink to kafka installation directory
+  file:
+    src: "{{ kafka_root_dir }}/kafka_{{ kafka_scala_version }}-{{ kafka_version }}"
+    dest: "{{ kafka_dir }}"
+    state: link
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+
+- name: Create directory for kafka data log files
+  file:
+    path: "{{ item }}"
+    state: directory
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+    mode: 0755
+  with_items: "{{ kafka_data_log_dirs.split(",") }}"
+
+- name: Create directory for kafka application logs
+  file:
+    path: "{{ kafka_log_dir }}"
+    state: directory
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+    mode: 0755
+
+- name: Register "{{ kafka_dir }}/logs" directory status
+  stat:
+    path: "{{ kafka_dir }}/logs"
+  register: application_logs_dir
+
+- name: Create symlink to application log directory
+  file:
+    src: "{{ kafka_log_dir }}"
+    dest: "{{ kafka_dir }}/logs"
+    state: link
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+    mode: 0755
+    follow: no
+  when: not application_logs_dir.stat.exists
+
+- name: Template configuration file to server.properties
+  template:
+    src: server.properties.j2
+    dest: "{{ kafka_dir }}/config/kraft/server.properties"
+    group: "{{ kafka_group }}"
+    owner: "{{ kafka_user }}"
+    mode: 0644
+  notify:
+    - Restart kafka service
+
+- name: Generate kafka storage random uuid
+  ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
+  when: not dir.stat.exists
+  register: kafka_uuid
+
+- name: Format kafka storage
+  ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_uuid.stdout }} -c {{ kafka_dir }}/config/kraft/server.properties"
+  when: kafka_uuid.changed
+
+- name: Template kafka systemd service
+  template:
+    src: kafka.service.j2
+    dest: "{{ kafka_systemd_file_path }}"
+    group: root
+    owner: root
+    mode: 0644
+  notify:
+    - Restart kafka
+
+- name: Start kafka service
+  service:
+    name: kafka
+    state: started
+    enabled: yes
+
+- name: Delete the kafka archive file
+  file:
+    path: /tmp/kafka_{{ kafka_scala_version }}-{{ kafka_version }}.tgz
+    state: absent
