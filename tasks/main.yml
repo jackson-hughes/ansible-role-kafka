@@ -100,6 +100,12 @@
   ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_uuid.stdout }} -c {{ kafka_dir }}/config/kraft/server.properties"
   when: kafka_uuid.changed
 
+- name: Set permissions on meta.properties
+  ansible.builtin.file:
+    path: "{{ kafka_data_log_dir }}/meta.properties"
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: "0644"
 - name: Template kafka systemd service
   template:
     src: kafka.service.j2
