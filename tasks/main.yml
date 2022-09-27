@@ -86,18 +86,24 @@
   notify:
     - Restart kafka
 
-- name: Check if Kafka storage has been formatted
+- name: Check if meta.properties exists
   stat:
     path: "{{ kafka_data_log_dir }}/meta.properties"
-  register: storage_format_file
+  register: meta_properties_file
 
-- name: Generate kafka storage random uuid
-  ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
-  when: not storage_format_file.stat.exists
-  register: kafka_uuid
+- block:
+  - name: Generate kafka cluster random uuid
+    ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
+    register: kafka_uuid
+    run_once: true
+
+  - name: Set fact with kafka cluster uuid
+    set_fact: kafka_cluster_uuid="{{ kafka_uuid.stdout }}"
+    ignore_errors: true
+  when: not meta_properties_file.stat.exists
 
 - name: Format kafka storage
-  ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_uuid.stdout }} -c {{ kafka_dir }}/config/kraft/server.properties"
+  ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh format -t {{ kafka_cluster_uuid }} -c {{ kafka_dir }}/config/kraft/server.properties"
   when: kafka_uuid.changed
 
 - name: Set permissions on meta.properties
