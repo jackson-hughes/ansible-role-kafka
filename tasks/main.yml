@@ -50,7 +50,7 @@
     group: "{{ kafka_group }}"
     owner: "{{ kafka_user }}"
     mode: 0755
-  with_items: "{{ kafka_data_log_dirs }}"
+  with_items: "{{ kafka_data_log_dir }}"
 
 - name: Create directory for kafka application logs
   file:
@@ -85,6 +85,11 @@
     mode: 0644
   notify:
     - Restart kafka
+
+- name: Check if Kafka storage has been formatted
+  stat:
+    path: "{{ kafka_dir }}"
+  register: dir
 
 - name: Generate kafka storage random uuid
   ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
