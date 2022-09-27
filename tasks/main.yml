@@ -84,7 +84,7 @@
     owner: "{{ kafka_user }}"
     mode: 0644
   notify:
-    - Restart kafka service
+    - Restart kafka
 
 - name: Generate kafka storage random uuid
   ansible.builtin.command: "{{ kafka_dir }}/bin/kafka-storage.sh random-uuid"
