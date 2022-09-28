@@ -6,7 +6,8 @@ After=network.target
 
 [Service]
 Type=simple
-StandardOutput=null
+StandardOutput=journal
+StandardError=journal
 Environment="KAFKA_HEAP_OPTS={{ kafka_java_heap }}"
 Environment="LOG_DIR={{ kafka_log_dir }}"
 ExecStart={{ kafka_dir }}/bin/kafka-server-start.sh {{ kafka_dir }}/config/kraft/server.properties
